@@ -28,6 +28,7 @@ class UsersController extends ControllerBase
     public function initialize(): void
     {
         $this->view->setTemplateBefore('private');
+        $this->view->setVar('bodyClass', 'main');
     }
 
     /**
@@ -36,7 +37,7 @@ class UsersController extends ControllerBase
     public function indexAction(): void
     {
         $this->view->setVar('form', new UsersForm());
-        $this->assets->collection("js")->addJs("/js/privateUsers.js", true, true);
+//        $this->assets->collection("js")->addJs("/js/privateUsers.js", true, true);
     }
 
     /**

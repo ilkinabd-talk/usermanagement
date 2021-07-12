@@ -1,53 +1,66 @@
-# docker build -t phalconphp/vokuro:4.0.6 -f resources/Dockerfile .
+FROM php:7.4-apache
+LABEL maintainer="ilkin5@mail.ru"
 
-# debian/buster
-FROM php:7.4-cli
 
-ARG BUILD_ID=2
-ARG VERSION=4.0.6
+COPY ./ /var/www/html/
 
-ENV BUILD_ID=$BUILD_ID \
-    APP_VERSION=$VERSION \
-    PHALCON_VERSION=4.0.6 \
-    PHALCON_BUILD=1070 \
-    PHALCON_BRANCH=nightly \
-    PHALCON_OS=debian/buster
+# Download script to install PHP extensions and dependencies
+ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
 
-LABEL build_id="$BUILD_ID" \
-      version="$VERSION" \
-      vendor="Phalcon" \
-      maintainer="Phalcon Team <team@phalcon.io>" \
-      description="The PHP image to test Vökuró example concepts"
+RUN chmod uga+x /usr/local/bin/install-php-extensions && sync
 
-ADD . /code
+RUN apt-get update &&  \
+    apt-get install -y --no-install-recommends \
+    libonig-dev\
+    gcc \
+    libpcre3-dev \
+    libxml2-dev \
+	zlib1g-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    make automake autoconf \
+    git && \
+    docker-php-ext-install iconv mbstring && \
+    docker-php-ext-install pdo pdo_mysql && \
+    docker-php-ext-install mysqli && \
+    docker-php-ext-install zip xml && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install gd
 
-WORKDIR /code
+#PHP-PSR
+RUN git clone https://github.com/jbboehr/php-psr.git /root/psr && \
+        cd /root/psr && \
+        phpize && \
+        ./configure && \
+        make && \
+        make test && \
+        make install && \
+        echo "extension=psr.so" > /usr/local/etc/php/conf.d/29-psr.ini && \
+        cd && rm -Rf /root/psr
+#custom
+RUN echo "post_max_size=21M" > /usr/local/etc/php/conf.d/custom.ini &&  \
+    echo "upload_max_filesize=20M" >> /usr/local/etc/php/conf.d/custom.ini && \
+    echo "session.gc_maxlifetime=86400" >> /usr/local/etc/php/conf.d/custom.ini
 
-RUN export PHALCON_REPO="https://packagecloud.io/phalcon/$PHALCON_BRANCH" \
-           PHALCON_PKG="php7.4-phalcon_$PHALCON_VERSION-$PHALCON_BUILD+php7.4_amd64.deb" \
-    && curl -sSL \
-        "$PHALCON_REPO/packages/$PHALCON_OS/$PHALCON_PKG/download.deb" \
-        -o /tmp/phalcon.deb \
-    && mkdir /tmp/pkg \
-    && dpkg-deb -R /tmp/phalcon.deb /tmp/pkg \
-    && cp /tmp/pkg/usr/lib/php/*/phalcon.so "$(php-config  --extension-dir)/phalcon.so" \
-    && docker-php-ext-install opcache pdo_mysql mysqli 1> /dev/null \
-    && printf "\\n" | pecl install --force psr 1> /dev/null \
-    && echo "extension=psr.so" > "$PHP_INI_DIR/conf.d/docker-php-ext-psr.ini" \
-    && echo "extension=phalcon.so" > "$PHP_INI_DIR/conf.d/docker-php-ext-phalcon.ini" \
-    && php -m | grep -i "opcache\|mysql\|phalcon\|psr\|pdo\|mbstring" \
-    && mv /code/.env.example /code/.env \
-    && apt-get autoremove -y \
-    && apt-get autoclean -y \
-    && apt-get clean -y \
-    && rm -rf /tmp/* /var/tmp/* \
-    && find /var/cache/apt/archives /var/lib/apt/lists /var/cache \
-       -not -name lock \
-       -type f \
-       -delete \
-    && find /var/log -type f | while read f; do echo -n '' > ${f}; done
+#get phalcon source
+RUN git clone -b v4.1.2 --single-branch git://github.com/phalcon/cphalcon.git /root/buildphalcon
 
-EXPOSE 80
+#compile phalcon
+RUN cd /root/buildphalcon/build/php7/64bits && \
+    phpize && export CFLAGS="-O2 -s" && \
+    ./configure && make -j 8 && make install && \
+    echo "extension=phalcon.so" > /usr/local/etc/php/conf.d/30-phalcon.ini && \
+    rm -Rf /root/buildphalcon
 
-# docker run -p 80:80 phalconphp/vokuro:4.0.5
-CMD ["php", "-S", "0.0.0.0:80", "-t", "public/", ".htrouter.php"]
+#phalcon dev tool
+#RUN cd /root && \
+#    git clone https://github.com/phalcon/phalcon-devtools.git && \
+#    cd /root/phalcon-devtools && \
+#    echo 'alias phalcon="~/phalcon-devtools/phalcon.php"'>> ~/.bashrc
+    # ln -s ~/phalcon-devtools/phalcon.php /usr/bin/phalcon && \
+    # chmod ugo+x /usr/bin/phalcon
+
+RUN a2enmod rewrite
+

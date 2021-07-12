@@ -31,7 +31,7 @@ import "./calendar";
  | Import JS components.
  |
  */
-import "./maps";
+// import "./maps";
 import "./chat";
 import "./show-modal";
 import "./show-slide-over";

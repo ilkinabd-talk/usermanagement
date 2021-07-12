@@ -9,3 +9,7 @@ composer.lock
 vendor/
 .env
 boxfile.yml
+public/design/node_modules
+public/design/dist
+.idea
+.DS_Store
