@@ -37,6 +37,17 @@ class UsersController extends ControllerBase
     public function indexAction(): void
     {
         $this->view->setVar('form', new UsersForm());
+        $builder = $this->modelsManager->createBuilder();
+        $builder->addFrom(Users::class)->columns('*');
+
+        $paginator = new Paginator([
+            'builder' => $builder,
+            'limit'   => 2,
+            'page'    => $this->request->getQuery('page', 'int', 1),
+        ]);
+
+        $this->view->setVar('page', $paginator->paginate());
+
 //        $this->assets->collection("js")->addJs("/js/privateUsers.js", true, true);
     }
 
