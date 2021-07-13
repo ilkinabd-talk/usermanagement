@@ -24,6 +24,7 @@ use Vokuro\Providers\RouterProvider;
 use Vokuro\Providers\SecurityProvider;
 use Vokuro\Providers\SessionBagProvider;
 use Vokuro\Providers\SessionProvider;
+use Vokuro\Providers\TntSearchProvider;
 use Vokuro\Providers\UrlProvider;
 use Vokuro\Providers\ViewProvider;
 use Vokuro\Providers\AssetsProvider;
@@ -46,4 +47,5 @@ return [
     UrlProvider::class,
     ViewProvider::class,
     AssetsProvider::class,
+    TntSearchProvider::class
 ];

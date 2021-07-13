@@ -30,7 +30,8 @@
         "ext-phalcon": ">=4.0.0",
         "robmorgan/phinx": "^0.11.1",
         "swiftmailer/swiftmailer": "^6.2",
-        "vlucas/phpdotenv": "^3.6"
+        "vlucas/phpdotenv": "^3.6",
+        "teamtnt/tntsearch": "^2.8"
     },
     "require-dev": {
         "codeception/codeception": "^4.1.6",

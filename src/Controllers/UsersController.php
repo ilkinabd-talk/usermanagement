@@ -14,6 +14,7 @@ namespace Vokuro\Controllers;
 
 use Phalcon\Mvc\Model\Criteria;
 use Phalcon\Paginator\Adapter\QueryBuilder as Paginator;
+use TeamTNT\TNTSearch\TNTSearch;
 use Vokuro\Forms\ChangePasswordForm;
 use Vokuro\Forms\UsersForm;
 use Vokuro\Models\PasswordChanges;
@@ -36,45 +37,38 @@ class UsersController extends ControllerBase
      */
     public function indexAction(): void
     {
-        $this->view->setVar('form', new UsersForm());
+        $q       = $this->request->getQuery('q', null, 0);
+        $ids     = [0];
+        $limit   = $this->request->getQuery('size', 'int', 1);
+        $page    = $this->request->getQuery('page', 'int', 1);
         $builder = $this->modelsManager->createBuilder();
         $builder->addFrom(Users::class)->columns('*');
 
-        $paginator = new Paginator([
-            'builder' => $builder,
-            'limit'   => 2,
-            'page'    => $this->request->getQuery('page', 'int', 1),
-        ]);
+        // Search action
+        if ($q && $q !== '') {
+            /** @var TNTSearch $search */
+            $search = $this->di->get('search');
+            $search->selectIndex("name.index");
+            $res = $search->search($q);
 
-        $this->view->setVar('page', $paginator->paginate());
+            if ($res['hits'] > 0) {
+                $ids = $res['ids'];
+            }
 
-//        $this->assets->collection("js")->addJs("/js/privateUsers.js", true, true);
-    }
-
-    /**
-     * Searches for users
-     */
-    public function searchAction(): void
-    {
-        $builder = Criteria::fromInput($this->getDI(), Users::class, $this->request->getQuery());
-
-        $count = Users::count($builder->getParams());
-        if ($count === 0) {
-            $this->flash->notice('The search did not find any users');
-            $this->dispatcher->forward([
-                'action' => 'index',
+            $builder->andWhere('id IN({ids:array})');
+            $builder->setBindParams([
+                'ids' => $ids
             ]);
-
-            return;
         }
 
         $paginator = new Paginator([
-            'builder'  => $builder->createBuilder(),
-            'limit' => 10,
-            'page'  => $this->request->getQuery('page', 'int', 1),
+            'builder' => $builder,
+            'limit'   => $limit,
+            'page'    => $page,
         ]);
 
-        $this->view->setVar('page', $paginator->paginate());
+        $page = $paginator->paginate();
+        $this->view->setVar('page', $page);
     }
 
     /**
@@ -87,7 +81,7 @@ class UsersController extends ControllerBase
         if ($this->request->isPost()) {
             if (!$form->isValid($this->request->getPost())) {
                 foreach ($form->getMessages() as $message) {
-                    $this->flash->error((string) $message);
+                    $this->flash->error((string)$message);
                 }
             } else {
                 $user = new Users([
@@ -98,7 +92,7 @@ class UsersController extends ControllerBase
 
                 if (!$user->save()) {
                     foreach ($user->getMessages() as $message) {
-                        $this->flash->error((string) $message);
+                        $this->flash->error((string)$message);
                     }
                 } else {
                     $this->flash->success("User was created successfully");
@@ -141,12 +135,12 @@ class UsersController extends ControllerBase
 
             if (!$form->isValid($this->request->getPost())) {
                 foreach ($form->getMessages() as $message) {
-                    $this->flash->error((string) $message);
+                    $this->flash->error((string)$message);
                 }
             } else {
                 if (!$user->save()) {
                     foreach ($user->getMessages() as $message) {
-                        $this->flash->error((string) $message);
+                        $this->flash->error((string)$message);
                     }
                 } else {
                     $this->flash->success('User was updated successfully.');
@@ -178,7 +172,7 @@ class UsersController extends ControllerBase
 
         if (!$user->delete()) {
             foreach ($user->getMessages() as $message) {
-                $this->flash->error((string) $message);
+                $this->flash->error((string)$message);
             }
         } else {
             $this->flash->success('User was deleted.');
@@ -199,7 +193,7 @@ class UsersController extends ControllerBase
         if ($this->request->isPost()) {
             if (!$form->isValid($this->request->getPost())) {
                 foreach ($form->getMessages() as $message) {
-                    $this->flash->error((string) $message);
+                    $this->flash->error((string)$message);
                 }
             } else {
                 $user = $this->auth->getUser();
@@ -214,7 +208,7 @@ class UsersController extends ControllerBase
 
                 if (!$passwordChange->save()) {
                     foreach ($passwordChange->getMessages() as $message) {
-                        $this->flash->error((string) $message);
+                        $this->flash->error((string)$message);
                     }
                 } else {
                     $this->flash->success('Your password was successfully changed');
