@@ -19,6 +19,7 @@ use Vokuro\Forms\ChangePasswordForm;
 use Vokuro\Forms\UsersForm;
 use Vokuro\Models\PasswordChanges;
 use Vokuro\Models\Users;
+use Phalcon\Filter;
 
 /**
  * Vokuro\Controllers\UsersController
@@ -37,17 +38,20 @@ class UsersController extends ControllerBase
      */
     public function indexAction(): void
     {
-        $q       = $this->request->getQuery('q', null, 0);
-        $ids     = [0];
-        $limit   = $this->request->getQuery('size', 'int', 1);
-        $page    = $this->request->getQuery('page', 'int', 1);
+        $q     = $this->request->getQuery('q', null, 0);
+        $ids   = [0];
+        $limit = $this->request->getQuery('size', 'absint', 1);
+        $page  = $this->request->getQuery('page', 'absint', 1);
+
         $builder = $this->modelsManager->createBuilder();
         $builder->addFrom(Users::class)->columns('*');
 
         // Search action
         if ($q && $q !== '') {
             /** @var TNTSearch $search */
-            $search = $this->di->get('search');
+            $search                 = $this->di->get('search');
+            $search->fuzziness      = true;
+            $search->fuzzy_distance = 10;
             $search->selectIndex("name.index");
             $res = $search->search($q);
 
@@ -66,9 +70,14 @@ class UsersController extends ControllerBase
             'limit'   => $limit,
             'page'    => $page,
         ]);
+        $pager     = $paginator->paginate();
 
-        $page = $paginator->paginate();
-        $this->view->setVar('page', $page);
+        if (count($pager->getItems()) === 0 && $page > 1 && $limit > 1) {
+            $this->response->redirect('/users?page=1&size=1');
+            return;
+        }
+
+        $this->view->setVar('page', $pager);
     }
 
     /**

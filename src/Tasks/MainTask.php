@@ -22,8 +22,8 @@ class MainTask extends Task
     {
         /** @var TNTSearch $tnt */
         $tnt = $this->di->get('search');
-
-        $indexer = $tnt->createIndex('name.index');
+        $tnt->fuzziness = true;
+        $indexer        = $tnt->createIndex('name.index');
         $indexer->query('SELECT id, name, email FROM users;');
         //$indexer->setLanguage('german');
         $indexer->run();
