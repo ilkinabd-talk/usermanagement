@@ -10,9 +10,6 @@ final class CreateUsers extends AbstractMigration
     public function change(): void
     {
         $table = $this->table('users');
-        if ($table->exists()) {
-            return;
-        }
 
         $table->addColumn('name', 'string', ['limit' => 255])
             ->addColumn('email', 'string', ['limit' => 255])

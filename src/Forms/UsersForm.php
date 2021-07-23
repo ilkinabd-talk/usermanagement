@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -12,9 +13,12 @@ declare(strict_types=1);
 
 namespace Vokuro\Forms;
 
+use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
+use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 use Phalcon\Validation\Validator\Email;
 use Phalcon\Validation\Validator\PresenceOf;
@@ -23,77 +27,110 @@ use Vokuro\Models\Profiles;
 class UsersForm extends Form
 {
     /**
-     * @param null $entity
-     * @param array $options
+     * @param  null   $entity
+     * @param  array  $options
      */
     public function initialize($entity = null, array $options = [])
     {
-        // In edition the id is hidden
-        if (!empty($options['edit'])) {
-            $id = new Hidden('id');
-        } else {
-            $id = new Text('id');
-        }
-
-        $this->add($id);
-
-        $name = new Text('name', [
-            'placeholder' => 'Name',
-        ]);
-
-        $name->addValidators([
-            new PresenceOf([
-                'message' => 'The name is required',
-            ]),
-        ]);
+        $name = new Text(
+            'name',
+            [
+                'placeholder' => 'Name',
+            ]
+        );
+        $name->setLabel('Name');
+        $name->addValidators(
+            [
+                new PresenceOf(
+                    [
+                        'message' => 'The name is required',
+                    ]
+                ),
+            ]
+        );
 
         $this->add($name);
 
-        $email = new Text('email', [
-            'placeholder' => 'Email',
-        ]);
+        $email = new Text(
+            'email',
+            [
+                'placeholder' => 'Email',
+            ]
+        );
 
-        $email->addValidators([
-            new PresenceOf([
-                'message' => 'The e-mail is required',
-            ]),
-            new Email([
-                'message' => 'The e-mail is not valid',
-            ]),
-        ]);
+        $email->setLabel('E-mail');
+        $email->addValidators(
+            [
+                new PresenceOf(
+                    [
+                        'message' => 'The e-mail is required',
+                    ]
+                ),
+                new Email(
+                    [
+                        'message' => 'The e-mail is not valid',
+                    ]
+                ),
+            ]
+        );
+
+        $password = new Password(
+            'password',
+            [
+                'placeholder' => 'Password',
+            ]
+        );
+        $password->setLabel('Password');
+        $this->add($password);
+
 
         $this->add($email);
 
-        $profiles = Profiles::find([
-            'active = :active:',
-            'bind' => [
-                'active' => 'Y',
-            ],
-        ]);
+        $biography = new TextArea('biography');
+        $biography->setLabel('Biography');
+        $this->add($biography);
 
-        $this->add(new Select('profilesId', $profiles, [
-            'using'      => [
-                'id',
-                'name',
-            ],
-            'useEmpty'   => true,
-            'emptyText'  => '...',
-            'emptyValue' => '',
-        ]));
 
-        $this->add(new Select('banned', [
-            'Y' => 'Yes',
-            'N' => 'No',
-        ]));
+        $profiles = Profiles::find(
+            [
+                'active = :active:',
+                'bind' => [
+                    'active' => 'Y',
+                ],
+            ]
+        );
+        $this->add(
+            (new Select(
+                'profilesId',
+                $profiles,
+                [
+                    'using'      => [
+                        'id',
+                        'name',
+                    ],
+                    'useEmpty'   => true,
+                    'emptyText'  => 'Select profiles',
+                    'emptyValue' => '',
+                ]
+            ))->setLabel('Profiles')
+        );
 
-        $this->add(new Select('suspended', [
-            'Y' => 'Yes',
-            'N' => 'No',
-        ]));
+        $this->add(
+            (new SwitchCheck(
+                'banned'
+            ))->setLabel('Banned')
+        );
 
-        $this->add(new Select('active', [
-            'Y' => 'Yes',
-            'N' => 'No',
-        ]));
+        $this->add(
+            (new SwitchCheck(
+                'suspended'
+            ))->setLabel('Suspended')
+        );
+
+        $this->add(
+            (new SwitchCheck(
+                'active'
+            ))->setLabel('Active')
+        );
     }
 }

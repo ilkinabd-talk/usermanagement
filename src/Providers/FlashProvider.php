@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -25,24 +26,29 @@ class FlashProvider implements ServiceProviderInterface
     protected $providerName = 'flash';
 
     /**
-     * @param DiInterface $di
+     * @param  DiInterface  $di
      *
      * @return void
      */
     public function register(DiInterface $di): void
     {
-        $di->set($this->providerName, function () {
-            $escaper = new Escaper();
-            $flash = new Flash($escaper);
-            $flash->setImplicitFlush(false);
-            $flash->setCssClasses([
-                'error'   => 'alert alert-danger',
-                'success' => 'alert alert-success',
-                'notice'  => 'alert alert-info',
-                'warning' => 'alert alert-warning',
-            ]);
+        $di->set(
+            $this->providerName,
+            function () {
+                $escaper = new Escaper();
+                $flash   = new Flash($escaper);
+                $flash->setImplicitFlush(false);
+                $flash->setCssClasses(
+                    [
+                        'error'   => 'alert alert-danger-soft mb-2 show',
+                        'success' => 'alert alert-success-soft mb-2 show',
+                        'notice'  => 'alert alert-primary-soft mb-2 show',
+                        'warning' => 'alert alert-warning-soft mb-2 show',
+                    ]
+                );
 
-            return $flash;
-        });
+                return $flash;
+            }
+        );
     }
 }

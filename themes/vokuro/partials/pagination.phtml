@@ -1,0 +1,135 @@
+<?php
+
+use Phalcon\Mvc\View;
+use Phalcon\Paginator\RepositoryInterface;
+
+/**
+ * @var RepositoryInterface $page
+ * @var View                $this
+ */
+
+$limits       = [10, 20, 30, 'all'];
+$q            = count($page->getItems()) > 0 && ! empty($this->request->getQuery('q')) ? '&q='.$this->request->getQuery(
+    ) : '';
+$ends_count   = 1;
+$middle_count = 1;
+$dots         = false;
+?>
+
+<!-- BEGIN: Pagination -->
+<div class="intro-y col-span-12 flex flex-wrap sm:flex-row sm:flex-nowrap items-center">
+    <ul class="pagination">
+        <li>
+            <?= $this->tag->linkTo(
+                [
+                    '/users?page='.$page->getFirst().'&size='.$page->getLimit().$q,
+                    '<i class="w-4 h-4" data-feather="chevrons-left"></i>',
+                    'class' => 'pagination__link',
+                ]
+            ) ?>
+        </li>
+        <li>
+            <?= $this->tag->linkTo(
+                [
+                    '/users?page='.$page->getPrevious().'&size='.$page->getLimit().$q,
+                    '<i class="w-4 h-4" data-feather="chevron-left"></i>',
+                    'class' => 'pagination__link',
+                ]
+            ) ?>
+        </li>
+        <?php
+        for ($i = 1; $i <= $page->getLast(); $i++): ?>
+            <?php
+            if ($page->getCurrent() === $i): ?>
+                <li>
+                    <?= $this->tag->linkTo(
+                        [
+                            '/users?page='.$i.'&size='.$page->getLimit().$q,
+                            $i,
+                            'class' => 'pagination__link pagination__link--active',
+                        ]
+                    ) ?>
+                </li>
+                <?php
+                $dots = true ?>
+            <?php
+            elseif ($i <= $ends_count
+                || ($page->getCurrent() && $i >= $page->getCurrent() - $middle_count
+                    && $i <= $page->getCurrent() + $middle_count)
+                || $i > $page->getLast() - $ends_count
+            ): ?>
+                <li>
+                    <?= $this->tag->linkTo(
+                        [
+                            '/users?page='.$i.'&size='.$page->getLimit().$q,
+                            $i,
+                            'class' => 'pagination__link',
+                        ]
+                    ) ?>
+                </li>
+                <?php
+                $dots = true; ?>
+            <?php
+            elseif ($dots === true): ?>
+                <li><span class="pagination__link">...</span></li>
+                <?php
+                $dots = false ?>
+            <?php
+            endif; ?>
+        <?php
+        endfor; ?>
+        <li>
+            <?= $this->tag->linkTo(
+                [
+                    '/users?page='.$page->getNext().'&size='.$page->getLimit().$q,
+                    '<i class="w-4 h-4" data-feather="chevron-right"></i>',
+                    'class' => 'pagination__link',
+                ]
+            ) ?>
+        </li>
+        <li>
+            <?= $this->tag->linkTo(
+                [
+                    '/users?page='.$page->getLast().'&size='.$page->getLimit().$q,
+                    '<i class="w-4 h-4" data-feather="chevrons-right"></i>',
+                    'class' => 'pagination__link',
+                ]
+            ) ?>
+        </li>
+    </ul>
+    <form id="size-form" method="get" action="" class="w-20 box mt-3 sm:mt-0" style="margin-left: auto">
+        <input type="hidden" name="page" value="<?= $page->getCurrent() ?>">
+        <?php
+        if ( ! empty($this->request->getQuery('q'))): ?>
+            <input type="hidden" name="q" value="<?php
+            $this->request->getQuery('q') ?>">
+        <?php
+        endif; ?>
+        <select id="size" name="size" class="form-select ">
+            <?php
+            foreach ($limits as $value): ?>
+                <?php
+                if ($this->request->getQuery('size') == $value): ?>
+                    <option selected value="<?= $value ?>">
+                        <?= $value ?>
+                    </option>
+                <?php
+                else: ?>
+                    <option value="<?= $value ?>">
+                        <?= $value ?>
+                    </option>
+                <?php
+                endif; ?>
+            <?php
+            endforeach; ?>
+        </select>
+    </form>
+</div>
+<script type="text/javascript">
+    document
+        .getElementById('size')
+        .addEventListener('change', function () {
+            document.getElementById('size-form').submit();
+        })
+</script>
+<!-- END: Pagination -->

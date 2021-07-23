@@ -1,3 +1,13 @@
+<?php
+
+use Phalcon\Mvc\View;
+
+/**
+ * @var View $this
+ */
+
+$bodyClass = $bodyClass ?? '';
+?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
@@ -9,13 +19,15 @@
     <meta name="keywords"
           content="admin template, Tinker Admin Template, dashboard template, flat admin template, responsive admin template, web app">
     <meta name="author" content="LEFT4CODE">
-    <title>{{ tag.getTitle() }}</title>
+    <title><?= $this->tag->getTitle() ?></title>
 
-    {{ assets.outputCss('css') }}
+    <?php
+    $this->assets->outputCss('css') ?>
 </head>
-<body class="{% if bodyClass is defined %}{{ bodyClass }}{% endif %}">
-{{ content() }}
+<body class="<?= $bodyClass ?>">
+<?= $this->getContent() ?>
 
-{{ assets.outputJs('js') }}
+<?php
+$this->assets->outputJs('js') ?>
 </body>
 </html>

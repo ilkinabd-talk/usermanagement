@@ -1,0 +1,108 @@
+<?php
+
+use Phalcon\Mvc\View;
+
+/**
+ * @var View $this
+ */
+?>
+
+<?php
+$menus = [
+    [
+        'name'       => 'Users',
+        'controller' => 'users',
+        'icon'       => 'users',
+        'actions'    => [
+            [
+                'name'   => 'List users',
+                'action' => 'index'
+            ],
+            [
+                'name'   => 'Create user',
+                'action' => 'create'
+            ]
+        ]
+    ]
+];
+?>
+<!-- BEGIN: Side Menu -->
+<nav class="side-nav">
+    <a href="" class="intro-x flex items-center pl-5 pt-4 mt-3">
+        <img alt="Tinker Tailwind HTML Admin Template" class="w-6" src="/images/logo.svg">
+        <span class="hidden xl:block text-white text-lg ml-3"> Tink<span class="font-medium">er</span> </span>
+    </a>
+    <div class="side-nav__devider my-6"></div>
+    <ul>
+        <?php
+        foreach ($menus as $item): ?>
+            <?= $this->tag->tagHtml('li'); ?>
+            <?php
+            if ($item['controller'] == $this->dispatcher->getControllerName()): ?>
+                <?= $this->tag->tagHtml('a', ['class' => 'side-menu side-menu--active', 'href' => 'javascript:;']); ?>
+            <?php
+            else: ?>
+                <?= $this->tag->tagHtml('a', ['class' => 'side-menu', 'href' => 'javascript:;']); ?>
+            <?php
+            endif ?>
+            <!-- Menu Icon -->
+            <?= $this->tag->tagHtml('div', ['class' => 'side-menu__icon']); ?>
+            <?= $this->tag->tagHtml('i', ['data-feather' => $item['icon']]); ?>
+            <?= $this->tag->tagHtmlClose('i'); ?>
+            <?= $this->tag->tagHtmlClose('div'); ?>
+
+            <!-- Menu title -->
+            <?= $this->tag->tagHtml('div', ['class' => 'side-menu__title']); ?>
+            <?= $item['name'] ?>
+            <?= $this->tag->tagHtml('div', ['class' => 'side-menu__sub-icon transform rotate-180']); ?>
+            <?= $this->tag->tagHtml('i', ['data-feather' => 'chevron-down']); ?>
+            <?= $this->tag->tagHtmlClose('i'); ?>
+            <?= $this->tag->tagHtmlClose('div'); ?>
+            <?= $this->tag->tagHtmlClose('div'); ?>
+
+            <?= $this->tag->tagHtmlClose('a'); ?>
+
+            <!-- Sub menu -->
+            <?= $this->tag->tagHtml('ul', ['class' => 'side-menu__sub-open']); ?>
+            <?php
+            foreach ($item['actions'] as $action): ?>
+                <?= $this->tag->tagHtml('li'); ?>
+                <?php
+                if ($action['action'] == $this->dispatcher->getActionName()): ?>
+                    <?= $this->tag->tagHtml(
+                        'a',
+                        [
+                            'class' => 'side-menu side-menu--active',
+                            'href'  => '/'.$item['controller'].'/'.$action['action']
+                        ]
+                    ); ?>
+                <?php
+                else: ?>
+                    <?= $this->tag->tagHtml(
+                        'a',
+                        [
+                            'class' => 'side-menu',
+                            'href'  => '/'.$item['controller'].'/'.$action['action']
+                        ]
+                    ); ?><?php
+                endif ?>
+                <?= $this->tag->tagHtml('div', ['class' => 'side-menu__icon']); ?>
+                <?= $this->tag->tagHtml('i', ['data-feather' => 'activity']); ?>
+                <?= $this->tag->tagHtmlClose('i'); ?>
+                <?= $this->tag->tagHtmlClose('div'); ?>
+                <?= $this->tag->tagHtml('div', ['class' => 'side-menu__title']); ?>
+                <?= $action['name'] ?>
+                <?= $this->tag->tagHtmlClose('div'); ?>
+                <?= $this->tag->tagHtmlClose('a'); ?>
+                <?= $this->tag->tagHtmlClose('li'); ?>
+
+            <?php
+            endforeach; ?>
+            <?= $this->tag->tagHtmlClose('ul'); ?>
+            <?= $this->tag->tagHtmlClose('li'); ?>
+
+        <?php
+        endforeach; ?>
+    </ul>
+</nav>
+<!-- END: Side Menu -->

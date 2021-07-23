@@ -50,7 +50,7 @@ mix.js("src/js/app.js", "js")
                 {
                     test: CKERegex.svg,
                     use: ["raw-loader"],
-                },
+            },
                 {
                     test: CKERegex.css,
                     use: [
@@ -62,7 +62,7 @@ mix.js("src/js/app.js", "js")
                                     "data-cke": true,
                                 },
                             },
-                        },
+                    },
                         "css-loader",
                         {
                             loader: "postcss-loader",
@@ -76,9 +76,9 @@ mix.js("src/js/app.js", "js")
                                     minify: true,
                                 }),
                             },
-                        },
+                    },
                     ],
-                },
+            },
             ],
         },
     })

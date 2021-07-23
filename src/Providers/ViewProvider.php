@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -26,7 +27,7 @@ class ViewProvider implements ServiceProviderInterface
     protected $providerName = 'view';
 
     /**
-     * @param DiInterface $di
+     * @param  DiInterface  $di
      */
     public function register(DiInterface $di): void
     {
@@ -42,18 +43,24 @@ class ViewProvider implements ServiceProviderInterface
             function () use ($viewsDir, $cacheDir, $di) {
                 $view = new View();
                 $view->setViewsDir($viewsDir);
-                $view->registerEngines([
-                    '.volt' => function (View $view) use ($cacheDir, $di) {
-                        $volt = new Volt($view, $di);
-                        $volt->setOptions([
-                            'always'    => true,
-                            'path'      => $cacheDir . 'volt/',
-                            'separator' => '_',
-                        ]);
+                $view->setPartialsDir($viewsDir.'partials/');
+                $view->registerEngines(
+                    [
+                        '.volt'  => function (View $view) use ($cacheDir, $di) {
+                            $volt = new Volt($view, $di);
+                            $volt->setOptions(
+                                [
+                                    'always'    => true,
+                                    'path'      => $cacheDir.'volt/',
+                                    'separator' => '_',
+                                ]
+                            );
 
-                        return $volt;
-                    },
-                ]);
+                            return $volt;
+                        },
+                        '.phtml' => View\Engine\Php::class
+                    ]
+                );
 
                 return $view;
             }
