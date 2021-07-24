@@ -14,6 +14,8 @@ $showed = count($page->getItems()) > 0 ? 'Showing 1 to '.$page->getLimit().' of 
 <h2 class="intro-y text-lg font-medium mt-10">
     Users Layout
 </h2>
+<?php
+$this->flash->output(); ?>
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <a href="/users/create" class="btn btn-primary shadow-md mr-2">Add New User</a>
@@ -71,7 +73,7 @@ $showed = count($page->getItems()) > 0 ? 'Showing 1 to '.$page->getLimit().' of 
                                 <a href="/users/edit/<?= $user->id ?>"
                                    class="flex items-center block p-2 transition duration-300 ease-in-out bg-white dark:bg-dark-1 hover:bg-gray-200 dark:hover:bg-dark-2 rounded-md">
                                     <i data-feather="edit-2" class="w-4 h-4 mr-2"></i> Edit </a>
-                                <a href="/users/delete/<?= $user->id ?>"
+                                <a data-delete data-record-id="<?= $user->id ?>"
                                    class="flex items-center block p-2 transition duration-300 ease-in-out bg-white dark:bg-dark-1 hover:bg-gray-200 dark:hover:bg-dark-2 rounded-md">
                                     <i data-feather="trash" class="w-4 h-4 mr-2"></i> Delete </a>
                             </div>

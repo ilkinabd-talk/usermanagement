@@ -28,6 +28,8 @@ $bodyClass = $bodyClass ?? '';
 <?= $this->getContent() ?>
 
 <?php
-$this->assets->outputJs('js') ?>
+$this->partial('modal-delete');
+$this->assets->outputJs('js');
+?>
 </body>
 </html>

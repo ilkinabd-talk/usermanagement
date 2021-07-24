@@ -33,7 +33,7 @@ import "./tom-select";
  */
 // import "./maps";
 // import "./chat";
-// import "./show-modal";
+import "./show-modal";
 // import "./show-slide-over";
 // import "./show-dropdown";
 // import "./search";

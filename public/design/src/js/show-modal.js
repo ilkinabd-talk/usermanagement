@@ -15,4 +15,14 @@
     cash("#programmatically-toggle-modal").on("click", function () {
         cash("#programmatically-modal").modal("toggle");
     });
+
+    // Handle delete modal
+    cash("[data-delete]").on("click", function () {
+        const recordId = cash(this).data('record-id');
+        const deleteForm = cash("#delete-form");
+        const link = deleteForm.attr('action').replace('[id]', recordId);
+        deleteForm.attr('action', link);
+        cash("#delete-modal-preview").modal("toggle");
+    });
+
 })(cash);
