@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -12,8 +13,6 @@ declare(strict_types=1);
 
 namespace Vokuro\Forms;
 
-use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 use Phalcon\Validation\Validator\PresenceOf;
@@ -21,33 +20,33 @@ use Phalcon\Validation\Validator\PresenceOf;
 class ProfilesForm extends Form
 {
     /**
-     * @param null $entity
-     * @param array $options
+     * @param  null   $entity
+     * @param  array  $options
      */
     public function initialize($entity = null, array $options = [])
     {
-        if (!empty($options['edit'])) {
-            $id = new Hidden('id');
-        } else {
-            $id = new Text('id');
-        }
+        $name = new Text(
+            'name',
+            [
+                'placeholder' => 'Name',
+            ]
+        );
+        $name->addValidators(
+            [
+                new PresenceOf(
+                    [
+                        'message' => 'The name is required',
+                    ]
+                ),
+            ]
+        );
 
-        $this->add($id);
-
-        $name = new Text('name', [
-            'placeholder' => 'Name',
-        ]);
-        $name->addValidators([
-            new PresenceOf([
-                'message' => 'The name is required',
-            ]),
-        ]);
+        $name->setLabel('Name');
 
         $this->add($name);
 
-        $this->add(new Select('active', [
-            'Y' => 'Yes',
-            'N' => 'No',
-        ]));
+        $active = new SwitchCheck('active');
+        $active->setLabel('Active');
+        $this->add($active);
     }
 }

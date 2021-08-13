@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -12,10 +13,14 @@ declare(strict_types=1);
 
 namespace Vokuro\Controllers;
 
+use Phalcon\Filter;
 use Phalcon\Mvc\Model\Criteria;
 use Phalcon\Paginator\Adapter\Model as Paginator;
+use Phalcon\Paginator\Adapter\QueryBuilder;
+use TeamTNT\TNTSearch\TNTSearch;
 use Vokuro\Forms\ProfilesForm;
 use Vokuro\Models\Profiles;
+use Vokuro\Models\Users;
 
 /**
  * Vokuro\Controllers\ProfilesController
@@ -23,13 +28,15 @@ use Vokuro\Models\Profiles;
  */
 class ProfilesController extends ControllerBase
 {
+    const PAGE_SIZE = 10;
+
     /**
      * Default action. Set the private (authenticated) layout
      * (layouts/private.volt)
      */
     public function initialize(): void
     {
-        $this->view->setTemplateBefore('private');
+        $this->view->setLayout('private');
     }
 
     /**
@@ -37,44 +44,55 @@ class ProfilesController extends ControllerBase
      */
     public function indexAction(): void
     {
-        $this->persistent->conditions = null;
-        $this->view->setVar('form', new ProfilesForm(null));
-    }
+        $q     = $this->request->getQuery('q', null, '');
+        $ids   = [0];
+        $limit = $this->request->getQuery(
+            'size',
+            [Filter::FILTER_REPLACE => ['all', 99999], Filter::FILTER_ABSINT],
+            self::PAGE_SIZE
+        );
+        $page  = $this->request->getQuery('page', 'absint', 1);
 
-    /**
-     * Searches for profiles
-     */
-    public function searchAction()
-    {
-        if ($this->request->isPost()) {
-            $query = Criteria::fromInput($this->di, Profiles::class, $this->request->getPost());
-            $searchparams = $query->getParams();
-            unset($searchparams['di']);
-            $this->persistent->searchParams = $searchparams;
+        $builder = $this->modelsManager->createBuilder();
+        $builder->addFrom(Profiles::class)->columns('*');
+
+        // Search action
+        if ($q && $q !== '') {
+            /** @var TNTSearch $search */
+            $search                 = $this->di->get('search');
+            $search->fuzziness      = true;
+            $search->fuzzy_distance = 10;
+            $search->selectIndex("name.index");
+            $res = $search->search($q);
+
+            if ($res['hits'] > 0) {
+                $ids = $res['ids'];
+            }
+
+            $builder->andWhere('id IN({ids:array})');
+            $builder->setBindParams(
+                [
+                    'ids' => $ids
+                ]
+            );
         }
 
-        $parameters = [];
-        if ($this->persistent->searchParams) {
-            $parameters = $this->persistent->searchParams;
+        $paginator = new QueryBuilder(
+            [
+                'builder' => $builder,
+                'limit'   => $limit === 0 ? self::PAGE_SIZE : $limit,
+                'page'    => $page,
+            ]
+        );
+        $pager     = $paginator->paginate();
+
+        if (count($pager->getItems()) === 0 && $page > 1 && $limit > 1) {
+            $this->response->redirect('/profiles?page=1&size='.self::PAGE_SIZE);
+
+            return;
         }
 
-        $profiles = Profiles::find($parameters);
-        if (count($profiles) == 0) {
-            $this->flash->notice("The search did not find any profiles");
-
-            return $this->dispatcher->forward([
-                "action" => "index",
-            ]);
-        }
-
-        $paginator = new Paginator([
-            'model' => Profiles::class,
-            'parameters' => $parameters,
-            'limit' => 10,
-            'page' => $this->request->getQuery('page', 'int', 1),
-        ]);
-
-        $this->view->setVar('page', $paginator->paginate());
+        $this->view->setVar('page', $pager);
     }
 
     /**
@@ -82,13 +100,16 @@ class ProfilesController extends ControllerBase
      */
     public function createAction(): void
     {
+        $this->view->setTemplateBefore('form');
         if ($this->request->isPost()) {
-            $profile = new Profiles([
-                'name' => $this->request->getPost('name', 'striptags'),
-                'active' => $this->request->getPost('active'),
-            ]);
+            $profile = new Profiles(
+                [
+                    'name'   => $this->request->getPost('name', 'striptags'),
+                    'active' => $this->request->getPost('active', null, 'N'),
+                ]
+            );
 
-            if (!$profile->save()) {
+            if (! $profile->save()) {
                 foreach ($profile->getMessages() as $message) {
                     $this->flash->error((string)$message);
                 }
@@ -103,25 +124,31 @@ class ProfilesController extends ControllerBase
     /**
      * Edits an existing Profile
      *
-     * @param int $id
+     * @param  int  $id
      */
     public function editAction($id)
     {
+        $this->view->setTemplateBefore('form');
         $profile = Profiles::findFirstById($id);
-        if (!$profile) {
+        if (! $profile) {
             $this->flash->error("Profile was not found");
-            return $this->dispatcher->forward([
-                'action' => 'index',
-            ]);
+
+            return $this->dispatcher->forward(
+                [
+                    'action' => 'index',
+                ]
+            );
         }
 
         if ($this->request->isPost()) {
-            $profile->assign([
-                'name' => $this->request->getPost('name', 'striptags'),
-                'active' => $this->request->getPost('active'),
-            ]);
+            $profile->assign(
+                [
+                    'name'   => $this->request->getPost('name', 'striptags'),
+                    'active' => $this->request->getPost('active', null, 'N'),
+                ]
+            );
 
-            if (!$profile->save()) {
+            if (! $profile->save()) {
                 foreach ($profile->getMessages() as $message) {
                     $this->flash->error((string)$message);
                 }
@@ -130,29 +157,32 @@ class ProfilesController extends ControllerBase
             }
         }
 
-        $this->view->setVars([
-            'form' => new ProfilesForm(null, ['edit' => true]),
-            'profile' => $profile,
-        ]);
+        $this->view->setVars(
+            [
+                'form' => new ProfilesForm($profile, ['edit' => true]),
+            ]
+        );
     }
 
     /**
      * Deletes a Profile
      *
-     * @param int $id
+     * @param  int  $id
      */
     public function deleteAction($id)
     {
         $profile = Profiles::findFirstById($id);
-        if (!$profile) {
+        if (! $profile) {
             $this->flash->error("Profile was not found");
 
-            return $this->dispatcher->forward([
-                'action' => 'index',
-            ]);
+            return $this->dispatcher->forward(
+                [
+                    'action' => 'index',
+                ]
+            );
         }
 
-        if (!$profile->delete()) {
+        if (! $profile->delete()) {
             foreach ($profile->getMessages() as $message) {
                 $this->flash->error((string)$message);
             }
@@ -160,8 +190,10 @@ class ProfilesController extends ControllerBase
             $this->flash->success("Profile was deleted");
         }
 
-        return $this->dispatcher->forward([
-            'action' => 'index',
-        ]);
+        return $this->dispatcher->forward(
+            [
+                'action' => 'index',
+            ]
+        );
     }
 }

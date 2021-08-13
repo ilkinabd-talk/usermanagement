@@ -23,6 +23,21 @@ $menus = [
                 'action' => 'create'
             ]
         ]
+    ],
+    [
+        'name'       => 'Profiles',
+        'controller' => 'profiles',
+        'icon'       => 'users',
+        'actions'    => [
+            [
+                'name'   => 'Create profile',
+                'action' => 'create'
+            ],
+            [
+                'name'   => 'List profiles',
+                'action' => 'index'
+            ]
+        ]
     ]
 ];
 ?>
@@ -54,7 +69,14 @@ $menus = [
             <!-- Menu title -->
             <?= $this->tag->tagHtml('div', ['class' => 'side-menu__title']); ?>
             <?= $item['name'] ?>
-            <?= $this->tag->tagHtml('div', ['class' => 'side-menu__sub-icon transform rotate-180']); ?>
+            <?php
+            if ($item['controller'] === $this->dispatcher->getControllerName()): ?>
+                <?= $this->tag->tagHtml('div', ['class' => 'side-menu__sub-icon transform rotate-180']); ?>
+            <?php
+            else: ?>
+                <?= $this->tag->tagHtml('div', ['class' => 'side-menu__sub-icon']); ?>
+            <?php
+            endif; ?>
             <?= $this->tag->tagHtml('i', ['data-feather' => 'chevron-down']); ?>
             <?= $this->tag->tagHtmlClose('i'); ?>
             <?= $this->tag->tagHtmlClose('div'); ?>
@@ -63,7 +85,14 @@ $menus = [
             <?= $this->tag->tagHtmlClose('a'); ?>
 
             <!-- Sub menu -->
-            <?= $this->tag->tagHtml('ul', ['class' => 'side-menu__sub-open']); ?>
+            <?php
+            if ($item['controller'] === $this->dispatcher->getControllerName()): ?>
+                <?= $this->tag->tagHtml('ul', ['class' => 'side-menu__sub-open']); ?>
+            <?php
+            else: ?>
+                <?= $this->tag->tagHtml('ul', ['style' => 'display:none;']); ?>
+            <?php
+            endif; ?>
             <?php
             foreach ($item['actions'] as $action): ?>
                 <?= $this->tag->tagHtml('li'); ?>
